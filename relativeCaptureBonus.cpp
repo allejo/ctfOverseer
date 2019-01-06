@@ -32,9 +32,10 @@ const std::string PLUGIN_NAME = "Relative Capture Bonus";
 const int MAJOR = 1;
 const int MINOR = 0;
 const int REV = 0;
-const int BUILD = 1;
+const int BUILD = 2;
 
 typedef std::map<std::string, std::string> StringDict;
+typedef std::pair<bz_eTeamType, bz_eTeamType> TeamPair;
 
 struct Configuration
 {
@@ -51,11 +52,12 @@ struct Configuration
 class RelativeCaptureBonus : public bz_Plugin, public bz_CustomSlashCommandHandler
 {
 public:
-    virtual const char* Name();
-    virtual void Init(const char* config);
-    virtual void Cleanup();
-    virtual void Event(bz_EventData* eventData);
-    virtual bool SlashCommand(int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *params);
+    const char* Name();
+    void Init(const char* config);
+    void Cleanup();
+    void Event(bz_EventData* eventData);
+    int GeneralCallback(const char* name, void* data);
+    bool SlashCommand(int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *params);
 
 private:
     void loadConfigurationFile();
@@ -98,6 +100,9 @@ void RelativeCaptureBonus::Init(const char* config)
 
     loadConfigurationFile();
 
+    // Namespace our clip fields to avoid plug-in conflicts
+    bz_setclipFieldString("allejo/ctfOverseer", Name());
+    
     Register(bz_eAllowCTFCaptureEvent);
     Register(bz_eAllowFlagGrab);
     Register(bz_eCaptureEvent);
@@ -121,6 +126,31 @@ void RelativeCaptureBonus::Cleanup()
     bz_removeCustomBZDBVariable(bzdb_warnUnfairTeams);
     
     bz_removeCustomSlashCommand("reload");
+}
+
+int RelativeCaptureBonus::GeneralCallback(const char *name, void *data)
+{
+    if (!name)
+    {
+        return -9999;
+    }
+
+    std::string callback = name;
+
+    if (callback == "calcBonusPoints")
+    {
+        TeamPair* pair = static_cast<TeamPair*>(data);
+
+        return calcCapturePoints(pair->first, pair->second);
+    }
+    else if (callback == "isFairCapture")
+    {
+        TeamPair* pair = static_cast<TeamPair*>(data);
+
+        return (int)isFairCapture(pair->first, pair->second);
+    }
+
+    return -9999;
 }
 
 void RelativeCaptureBonus::Event(bz_EventData* eventData)
