@@ -226,7 +226,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
             
             StringDict placeholders;
             placeholders["{capper}"] = bz_getPlayerCallsign(data->playerCapping);
-            placeholders["{teamCapping}"] = bzu_GetTeamName(data->teamCapped);
+            placeholders["{teamCapping}"] = bzu_GetTeamName(data->teamCapping);
             placeholders["{teamCapped}"] = bzu_GetTeamName(data->teamCapped);
             
             // A self-capture
