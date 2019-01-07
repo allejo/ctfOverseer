@@ -34,6 +34,11 @@ const int MINOR = 0;
 const int REV = 0;
 const int BUILD = 2;
 
+// Plugin settings
+const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
+const int SELF_CAP_MULTIPLIER = 5; /// The pentality multiplier for self-caps; this number times the current team size
+const int MESSAGE_SPAM_INTERVAL = 5; /// The number of seconds between a message should be sent to prevent spamming players
+
 typedef std::map<std::string, std::string> StringDict;
 typedef std::pair<bz_eTeamType, bz_eTeamType> TeamPair;
 
@@ -70,8 +75,9 @@ private:
     Configuration settings;
     
     std::map<bz_eTeamType, double> lastCapTime; /// The server time when a team was last capped on
+    std::map<bz_eTeamType, int> capBonus; /// The number of points a capture will be worth against this team
+    std::map<int, double> lastFlagDrop; /// The server time a team flag was last dropped
     std::map<int, double> lastFlagWarnMsg; /// The server time a warning was sent to a player trying to grab a team flag
-    std::map<int, int> captureBonus; /// The number of players a team had when its flag was grabbed
 
     const char* bzdb_delayTeamFlagGrab = "_delayTeamFlagGrab";
     const char* bzdb_disallowUnfairCap = "_disallowUnfairCap";
@@ -107,6 +113,7 @@ void RelativeCaptureBonus::Init(const char* config)
     Register(bz_eAllowFlagGrab);
     Register(bz_eCaptureEvent);
     Register(bz_eFlagGrabbedEvent);
+    Register(bz_eFlagDroppedEvent);
 
     bz_registerCustomBZDBInt(bzdb_delayTeamFlagGrab, 20);
     bz_registerCustomBZDBBool(bzdb_disallowUnfairCap, true);
@@ -192,7 +199,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
             int teamFlagGrabDelay = bz_getBZDBInt(bzdb_delayTeamFlagGrab);
             double safeGrabTime = lastCapTime[team] + teamFlagGrabDelay;
             
-            // If the `_delayTeamFlagGrab` variable is set to a nevative number, allow immediate flag grabs after capture
+            // If the `_delayTeamFlagGrab` variable is set to a negative number, allow immediate flag grabs after capture
             if (teamFlagGrabDelay < 0)
             {
                 return;
@@ -205,7 +212,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
             {
                 data->allow = false;
                 
-                double safeMsgTime = lastFlagWarnMsg[playerID] + 5;
+                double safeMsgTime = lastFlagWarnMsg[playerID] + MESSAGE_SPAM_INTERVAL;
                 
                 // Don't spam our users if they continue trying to grab it
                 if (bz_getCurrentTime() > safeMsgTime)
@@ -233,7 +240,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
             // A self-capture
             if (data->teamCapped == bz_getPlayerTeam(data->playerCapping))
             {
-                int penalty = 5 * bz_getTeamCount(data->teamCapped);
+                int penalty = SELF_CAP_MULTIPLIER * bz_getTeamCount(data->teamCapped);
                 
                 bz_incrementPlayerLosses(data->playerCapping, penalty);
                 
@@ -247,7 +254,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
             }
             
             bool isFair = isFairCapture(data->teamCapping, data->teamCapped);
-            int bonusPoints = abs(captureBonus[data->playerCapping]);
+            int bonusPoints = abs(capBonus[data->teamCapped]);
             
             if (isFair)
             {
@@ -277,20 +284,45 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
 
             bz_eTeamType flagTeam = bzu_getTeamFromFlag(data->flagType);
             bz_eTeamType grabTeam = bz_getPlayerTeam(data->playerID);
-
-            if (grabTeam >= eRedTeam && grabTeam <= ePurpleTeam)
+            
+            if (eRedTeam <= grabTeam && grabTeam <= ePurpleTeam)
             {
+                // Only recalculate the capture bonus if it's been X seconds since the flag was last dropped.
+                // This is to prevent players from dropping the flag right before capture and triggering a
+                // recalculation.
+                bool shouldRecalc = lastFlagDrop[data->flagID] + RECALC_INTERVAL < bz_getCurrentTime();
+
+                if (lastFlagDrop.count(data->flagID) && !shouldRecalc)
+                {
+                    return;
+                }
+                
                 int flagTeamSize = bz_getTeamCount(flagTeam);
                 int grabTeamSize = bz_getTeamCount(grabTeam);
 
                 int capValue = calcCapturePoints(grabTeam, flagTeam);
 
-                captureBonus[data->playerID] = capValue;
+                capBonus[flagTeam] = capValue;
 
-                if (capValue < 0 && flagTeamSize > 0)
+                bool sendWarning = bz_getBZDBBool(bzdb_warnUnfairTeams);
+                
+                if (sendWarning && capValue < 0 && flagTeamSize > 0)
                 {
                     bz_sendTextMessagef(BZ_SERVER, data->playerID, "%d vs %d? Don't be a bad sport.", grabTeamSize, flagTeamSize);
                 }
+            }
+        }
+        break;
+            
+        case bz_eFlagDroppedEvent:
+        {
+            bz_FlagDroppedEventData_V1 *data = (bz_FlagDroppedEventData_V1*)eventData;
+            
+            bz_eTeamType team = bzu_getTeamFromFlag(data->flagType);
+
+            if (eRedTeam <= team && team <= ePurpleTeam)
+            {
+                lastFlagDrop[data->flagID] = bz_getCurrentTime();
             }
         }
         break;
