@@ -201,7 +201,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
             int playerID = data->playerID;
             
             // Don't allow flag grabs on team flags that were captured less than `_delayTeamFlagGrab` seconds ago
-            if (bz_getCurrentTime() < safeGrabTime)
+            if (bz_getCurrentTime() < safeGrabTime && bz_getPlayerTeam(data->playerID) != team)
             {
                 data->allow = false;
                 
@@ -216,6 +216,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
                 }
             }
         }
+        break;
 
         case bz_eCaptureEvent:
         {
