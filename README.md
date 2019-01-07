@@ -1,7 +1,7 @@
 # CTF Overseer
 
 [![GitHub release](https://img.shields.io/github/release/allejo/ctfOverseer.svg)](https://github.com/allejo/ctfOverseer/releases/latest)
-![Minimum BZFlag Version](https://img.shields.io/badge/BZFlag-v2.4.18+-blue.svg)
+![Minimum BZFlag Version](https://img.shields.io/badge/BZFlag-v2.4.20+-blue.svg)
 [![License](https://img.shields.io/github/license/allejo/ctfOverseer.svg)](LICENSE.md)
 
 The plug-in that implements all of the CTF-related features from Planet MoFo's Apocalypse map. This plug-in has a number of features relating to capture events such as,
@@ -13,7 +13,7 @@ The plug-in that implements all of the CTF-related features from Planet MoFo's A
 
 ## Requirements
 
-- BZFlag 2.4.18
+- BZFlag 2.4.20+
 - C++11
 
 This plug-in follows [my standard instructions for compiling plug-ins](https://github.com/allejo/docs.allejo.io/wiki/BZFlag-Plug-in-Distribution).
