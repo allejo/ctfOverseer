@@ -183,7 +183,13 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
                 return;
             }
             
-            double teamFlagGrabDelay = bz_getBZDBInt(bzdb_delayTeamFlagGrab);
+            // If the team hasn't been capped against yet, don't disallow anything
+            if (!lastCapTime.count(team))
+            {
+                return;
+            }
+            
+            int teamFlagGrabDelay = bz_getBZDBInt(bzdb_delayTeamFlagGrab);
             double safeGrabTime = lastCapTime[team] + teamFlagGrabDelay;
             
             // If the `_delayTeamFlagGrab` variable is set to a nevative number, allow immediate flag grabs after capture
