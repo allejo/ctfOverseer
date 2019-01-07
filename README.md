@@ -4,7 +4,12 @@
 ![Minimum BZFlag Version](https://img.shields.io/badge/BZFlag-v2.4.18+-blue.svg)
 [![License](https://img.shields.io/github/license/allejo/ctfOverseer.svg)](LICENSE.md)
 
-A brief description about what the plugin does should go here
+The plug-in that implements all of the CTF-related features from Planet MoFo's Apocalypse map. This plug-in has a number of features relating to capture events such as,
+
+- Disable self-captures
+- Disable a team flag from being grabbed X seconds after it was capped (prevent "pass-camping")
+- Award bonus points to the player who capped the flag based on team counts
+- Announce custom messages on capture events
 
 ## Requirements
 
