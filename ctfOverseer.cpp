@@ -317,7 +317,7 @@ bool RelativeCaptureBonus::SlashCommand(int playerID, bz_ApiString command, bz_A
 
 void RelativeCaptureBonus::loadConfigurationFile()
 {
-    const char* section = "relativeCaptureBonus";
+    const char* section = "ctfOverseer";
     PluginConfig plgCfg = PluginConfig(configFile);
     
     if (plgCfg.errors)
