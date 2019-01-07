@@ -207,10 +207,11 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
                 
                 double safeMsgTime = lastFlagWarnMsg[playerID] + 5;
                 
+                // Don't spam our users if they continue trying to grab it
                 if (bz_getCurrentTime() > safeMsgTime)
                 {
                     bz_sendTextMessagef(BZ_SERVER, playerID, "Team flags cannot be grabbed for %d seconds after they were last capped.", teamFlagGrabDelay);
-                    bz_sendTextMessagef(BZ_SERVER, playerID, "You cannot grab the %s team flag for another ~%d seconds", bzu_GetTeamName(team), (safeGrabTime - bz_getCurrentTime()));
+                    bz_sendTextMessagef(BZ_SERVER, playerID, "You cannot grab the %s team flag for another ~%.0f seconds", bzu_GetTeamName(team), (safeGrabTime - bz_getCurrentTime()));
                     
                     lastFlagWarnMsg[playerID] = bz_getCurrentTime();
                 }
