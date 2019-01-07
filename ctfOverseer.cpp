@@ -230,7 +230,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
             placeholders["{teamCapped}"] = bzu_GetTeamName(data->teamCapped);
             
             // A self-capture
-            if (data->teamCapped == data->teamCapping)
+            if (data->teamCapped == bz_getPlayerTeam(data->playerCapping))
             {
                 int penalty = 5 * bz_getTeamCount(data->teamCapped);
                 
