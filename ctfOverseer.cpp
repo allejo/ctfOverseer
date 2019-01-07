@@ -232,7 +232,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
                 placeholders["{points}"] = std::to_string(-1 * penalty).c_str();
                 placeholders["{pointsAbs}"] = std::to_string(penalty).c_str();
                 
-                safeSendMessage(settings.SelfCapturePublicMessage, BZ_SERVER, placeholders);
+                safeSendMessage(settings.SelfCapturePublicMessage, BZ_ALLUSERS, placeholders);
                 safeSendMessage(settings.SelfCapturePrivateMessage, data->playerCapping, placeholders);
 
                 return;
@@ -247,7 +247,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
                 
                 placeholders["{points}"] = placeholders["{pointsAbs}"] = std::to_string(bonusPoints).c_str();
                 
-                safeSendMessage(settings.FairCapturePublicMessage, BZ_SERVER, placeholders);
+                safeSendMessage(settings.FairCapturePublicMessage, BZ_ALLUSERS, placeholders);
                 safeSendMessage(settings.FairCapturePrivateMessage, data->playerCapping, placeholders);
             }
             else
@@ -257,7 +257,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
                 placeholders["{points}"] = std::to_string(-1 * bonusPoints).c_str();
                 placeholders["{pointsAbs}"] = std::to_string(bonusPoints).c_str();
                 
-                safeSendMessage(settings.UnfairCapturePublicMessage, BZ_SERVER, placeholders);
+                safeSendMessage(settings.UnfairCapturePublicMessage, BZ_ALLUSERS, placeholders);
                 safeSendMessage(settings.UnfairCapturePrivateMessage, data->playerCapping, placeholders);
             }
         }
