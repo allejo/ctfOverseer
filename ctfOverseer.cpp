@@ -26,7 +26,7 @@
 #include "plugin_utils.h"
 
 // Define plugin name
-const std::string PLUGIN_NAME = "Relative Capture Bonus";
+const std::string PLUGIN_NAME = "CTF Overseer";
 
 // Define plugin version numbering
 const int MAJOR = 1;
