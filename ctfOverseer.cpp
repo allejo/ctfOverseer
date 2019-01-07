@@ -304,10 +304,10 @@ bool RelativeCaptureBonus::SlashCommand(int playerID, bz_ApiString command, bz_A
 {
     if (command == "reload" && bz_hasPerm(playerID, "setAll"))
     {
-        if (params->size() == 1 && params->get(0) == "relativeCaptureBonus")
+        if (params->size() == 1 && params->get(0) == "ctfoverseer")
         {
             loadConfigurationFile();
-            bz_sendTextMessage(BZ_SERVER, playerID, "Relative Capture Bonus database reloaded");
+            bz_sendTextMessage(BZ_SERVER, playerID, "CTF Overseer reloaded");
             
             return true;
         }
