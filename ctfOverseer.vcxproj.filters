@@ -6,7 +6,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.relativeCaptureBonus.txt" />
+    <None Include="README.ctfOverseer.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -17,7 +17,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="relativeCaptureBonus.cpp">
+    <ClCompile Include="ctfOverseer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
