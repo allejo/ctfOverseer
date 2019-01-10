@@ -32,7 +32,7 @@ const std::string PLUGIN_NAME = "CTF Overseer";
 const int MAJOR = 1;
 const int MINOR = 0;
 const int REV = 0;
-const int BUILD = 2;
+const int BUILD = 20;
 
 // Plugin settings
 const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
