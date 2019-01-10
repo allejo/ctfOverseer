@@ -286,14 +286,16 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
             bz_eTeamType flagTeam = bzu_getTeamFromFlag(data->flagType);
             bz_eTeamType grabTeam = bz_getPlayerTeam(data->playerID);
             
-            if (eRedTeam <= grabTeam && grabTeam <= ePurpleTeam)
+            if (eRedTeam <= grabTeam && grabTeam <= ePurpleTeam && flagTeam != grabTeam)
             {
                 // Only recalculate the capture bonus if it's been X seconds since the flag was last dropped.
                 // This is to prevent players from dropping the flag right before capture and triggering a
                 // recalculation.
                 bool shouldRecalc = lastFlagDrop[data->flagID] + RECALC_INTERVAL < bz_getCurrentTime();
 
-                if (lastFlagDrop.count(data->flagID) && !shouldRecalc)
+                // shouldRecalc will be false if the team flag has never been dropped before (the server
+                // just started), so allow a calculation on this occassion.
+                if (!lastFlagDrop.count(data->flagID) && !shouldRecalc)
                 {
                     return;
                 }
@@ -319,9 +321,11 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
         {
             bz_FlagDroppedEventData_V1 *data = (bz_FlagDroppedEventData_V1*)eventData;
             
-            bz_eTeamType team = bzu_getTeamFromFlag(data->flagType);
+            bz_eTeamType flagTeam = bzu_getTeamFromFlag(data->flagType);
+            bz_eTeamType grabTeam = bz_getPlayerTeam(data->playerID);
 
-            if (eRedTeam <= team && team <= ePurpleTeam)
+            // Only record the time of when an enemy drops the flag
+            if (eRedTeam <= flagTeam && flagTeam <= ePurpleTeam && flagTeam != grabTeam)
             {
                 lastFlagDrop[data->flagID] = bz_getCurrentTime();
             }
@@ -363,7 +367,7 @@ void RelativeCaptureBonus::loadConfigurationFile()
     
     if (plgCfg.errors)
     {
-        bz_debugMessagef(0, "ERROR :: Relative Capture Bonus :: There was an error reading the configuration file: %s", configFile);
+        bz_debugMessagef(0, "ERROR :: CTF Overseer :: There was an error reading the configuration file: %s", configFile);
         return;
     }
     
@@ -373,6 +377,14 @@ void RelativeCaptureBonus::loadConfigurationFile()
     settings.FairCapturePrivateMessage = bz_trim(plgCfg.item(section, "fair_cap_message_pm").c_str(), "\"");
     settings.UnfairCapturePublicMessage = bz_trim(plgCfg.item(section, "unfair_cap_message_pub").c_str(), "\"");
     settings.UnfairCapturePrivateMessage = bz_trim(plgCfg.item(section, "unfair_cap_message_pm").c_str(), "\"");
+
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer :: Loaded configuration...");
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   Self cap public message: %s", settings.SelfCapturePublicMessage.c_str());
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   Self cap private message: %s", settings.SelfCapturePrivateMessage.c_str());
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   Fair cap public message: %s", settings.FairCapturePublicMessage.c_str());
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   Fair cap private message: %s", settings.FairCapturePrivateMessage.c_str());
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   Unfair cap public message: %s", settings.UnfairCapturePublicMessage.c_str());
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   Unfair cap private message: %s", settings.UnfairCapturePrivateMessage.c_str());
 }
 
 void RelativeCaptureBonus::safeSendMessage(const std::string rawMsg, int recipient, StringDict placeholders)
