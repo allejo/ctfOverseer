@@ -32,7 +32,7 @@ const std::string PLUGIN_NAME = "CTF Overseer";
 const int MAJOR = 1;
 const int MINOR = 0;
 const int REV = 0;
-const int BUILD = 20;
+const int BUILD = 21;
 
 // Plugin settings
 const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
@@ -55,7 +55,7 @@ struct Configuration
     std::string UnfairCapturePrivateMessage;
 };
 
-class RelativeCaptureBonus : public bz_Plugin, public bz_CustomSlashCommandHandler
+class CTFOverseer : public bz_Plugin, public bz_CustomSlashCommandHandler
 {
 public:
     const char* Name();
@@ -87,9 +87,9 @@ private:
     const char* configFile;
 };
 
-BZ_PLUGIN(RelativeCaptureBonus)
+BZ_PLUGIN(CTFOverseer)
 
-const char* RelativeCaptureBonus::Name()
+const char* CTFOverseer::Name()
 {
     static const char* pluginBuild;
     
@@ -101,7 +101,7 @@ const char* RelativeCaptureBonus::Name()
     return pluginBuild;
 }
 
-void RelativeCaptureBonus::Init(const char* config)
+void CTFOverseer::Init(const char* config)
 {
     configFile = config;
 
@@ -124,7 +124,7 @@ void RelativeCaptureBonus::Init(const char* config)
     bz_registerCustomSlashCommand("reload", this);
 }
 
-void RelativeCaptureBonus::Cleanup()
+void CTFOverseer::Cleanup()
 {
     Flush();
 
@@ -136,7 +136,7 @@ void RelativeCaptureBonus::Cleanup()
     bz_removeCustomSlashCommand("reload");
 }
 
-int RelativeCaptureBonus::GeneralCallback(const char *name, void *data)
+int CTFOverseer::GeneralCallback(const char *name, void *data)
 {
     if (!name)
     {
@@ -161,7 +161,7 @@ int RelativeCaptureBonus::GeneralCallback(const char *name, void *data)
     return -9999;
 }
 
-void RelativeCaptureBonus::Event(bz_EventData* eventData)
+void CTFOverseer::Event(bz_EventData* eventData)
 {
     switch (eventData->eventType)
     {
@@ -337,7 +337,7 @@ void RelativeCaptureBonus::Event(bz_EventData* eventData)
     }
 }
 
-bool RelativeCaptureBonus::SlashCommand(int playerID, bz_ApiString command, bz_ApiString /*message*/, bz_APIStringList *params)
+bool CTFOverseer::SlashCommand(int playerID, bz_ApiString command, bz_ApiString /*message*/, bz_APIStringList *params)
 {
     if (command == "reload" && bz_hasPerm(playerID, "setAll"))
     {
@@ -360,7 +360,7 @@ bool RelativeCaptureBonus::SlashCommand(int playerID, bz_ApiString command, bz_A
     return false;
 }
 
-void RelativeCaptureBonus::loadConfigurationFile()
+void CTFOverseer::loadConfigurationFile()
 {
     const char* section = "ctfOverseer";
     PluginConfig plgCfg = PluginConfig(configFile);
@@ -387,7 +387,7 @@ void RelativeCaptureBonus::loadConfigurationFile()
     bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   Unfair cap private message: %s", settings.UnfairCapturePrivateMessage.c_str());
 }
 
-void RelativeCaptureBonus::safeSendMessage(const std::string rawMsg, int recipient, StringDict placeholders)
+void CTFOverseer::safeSendMessage(const std::string rawMsg, int recipient, StringDict placeholders)
 {
     if (rawMsg == "")
     {
@@ -399,7 +399,7 @@ void RelativeCaptureBonus::safeSendMessage(const std::string rawMsg, int recipie
     bz_sendTextMessage(BZ_SERVER, recipient, msg.c_str());
 }
 
-void RelativeCaptureBonus::formatString(bz_ApiString &string, StringDict placeholders)
+void CTFOverseer::formatString(bz_ApiString &string, StringDict placeholders)
 {
     for (auto it : placeholders)
     {
@@ -407,12 +407,12 @@ void RelativeCaptureBonus::formatString(bz_ApiString &string, StringDict placeho
     }
 }
 
-bool RelativeCaptureBonus::isFairCapture(bz_eTeamType capping, bz_eTeamType capped)
+bool CTFOverseer::isFairCapture(bz_eTeamType capping, bz_eTeamType capped)
 {
     return calcCapturePoints(capping, capped) > 0;
 }
 
-int RelativeCaptureBonus::calcCapturePoints(bz_eTeamType capping, bz_eTeamType capped)
+int CTFOverseer::calcCapturePoints(bz_eTeamType capping, bz_eTeamType capped)
 {
     int losingTeamSize = bz_getTeamCount(capped);
     int cappingTeamSize = bz_getTeamCount(capping);
