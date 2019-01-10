@@ -38,6 +38,7 @@ const int BUILD = 2;
 const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
 const int SELF_CAP_MULTIPLIER = 5; /// The pentality multiplier for self-caps; this number times the current team size
 const int MESSAGE_SPAM_INTERVAL = 5; /// The number of seconds between a message should be sent to prevent spamming players
+const int VERBOSE_DEBUG_LEVEL = 4; /// The debug level that verbose messages will be written out at
 
 typedef std::map<std::string, std::string> StringDict;
 typedef std::pair<bz_eTeamType, bz_eTeamType> TeamPair;
@@ -69,9 +70,9 @@ private:
     void safeSendMessage(const std::string msg, int recipient, StringDict placeholders);
     void formatString(bz_ApiString &string, StringDict placeholders);
     
-    bool calcCapturePoints(bz_eTeamType capping, bz_eTeamType capped);
     bool isFairCapture(bz_eTeamType capping, bz_eTeamType capped);
-    
+    int calcCapturePoints(bz_eTeamType capping, bz_eTeamType capped);
+
     Configuration settings;
     
     std::map<bz_eTeamType, double> lastCapTime; /// The server time when a team was last capped on
@@ -394,15 +395,19 @@ void RelativeCaptureBonus::formatString(bz_ApiString &string, StringDict placeho
     }
 }
 
-bool RelativeCaptureBonus::calcCapturePoints(bz_eTeamType capping, bz_eTeamType capped)
-{
-    int losingTeamSize = bz_getTeamCount(capped);
-    int cappingTeamSize = bz_getTeamCount(capping);
-    
-    return (3 * losingTeamSize + 8 * (losingTeamSize - cappingTeamSize));
-}
-
 bool RelativeCaptureBonus::isFairCapture(bz_eTeamType capping, bz_eTeamType capped)
 {
     return calcCapturePoints(capping, capped) > 0;
+}
+
+int RelativeCaptureBonus::calcCapturePoints(bz_eTeamType capping, bz_eTeamType capped)
+{
+    int losingTeamSize = bz_getTeamCount(capped);
+    int cappingTeamSize = bz_getTeamCount(capping);
+
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer :: Calculating bonus points for capping %s flag...", bzu_GetTeamName(capped));
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   losing team   => %d", losingTeamSize);
+    bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   grabbing team => %d", cappingTeamSize);
+
+    return (3 * losingTeamSize + 8 * (losingTeamSize - cappingTeamSize));
 }
