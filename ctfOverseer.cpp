@@ -32,7 +32,7 @@ const std::string PLUGIN_NAME = "CTF Overseer";
 const int MAJOR = 1;
 const int MINOR = 0;
 const int REV = 0;
-const int BUILD = 21;
+const int BUILD = 23;
 
 // Plugin settings
 const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
@@ -81,7 +81,6 @@ private:
     std::map<int, double> lastFlagWarnMsg; /// The server time a warning was sent to a player trying to grab a team flag
 
     const char* bzdb_delayTeamFlagGrab = "_delayTeamFlagGrab";
-    const char* bzdb_disallowUnfairCap = "_disallowUnfairCap";
     const char* bzdb_disallowSelfCap = "_disallowSelfCap";
     const char* bzdb_warnUnfairTeams = "_warnUnfairTeams";
     const char* configFile;
@@ -117,7 +116,6 @@ void CTFOverseer::Init(const char* config)
     Register(bz_eFlagDroppedEvent);
 
     bz_registerCustomBZDBInt(bzdb_delayTeamFlagGrab, 20);
-    bz_registerCustomBZDBBool(bzdb_disallowUnfairCap, true);
     bz_registerCustomBZDBBool(bzdb_disallowSelfCap, true);
     bz_registerCustomBZDBBool(bzdb_warnUnfairTeams, true);
 
@@ -129,7 +127,6 @@ void CTFOverseer::Cleanup()
     Flush();
 
     bz_removeCustomBZDBVariable(bzdb_delayTeamFlagGrab);
-    bz_removeCustomBZDBVariable(bzdb_disallowUnfairCap);
     bz_removeCustomBZDBVariable(bzdb_disallowSelfCap);
     bz_removeCustomBZDBVariable(bzdb_warnUnfairTeams);
 
