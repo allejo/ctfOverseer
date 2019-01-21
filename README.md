@@ -63,9 +63,37 @@ These custom BZDB variables can be configured with `-set` in configuration files
 
 ### Custom Slash Commands
 
+This plug-in implements custom slash commands only for administrative tasks.
+
 | Command | Permission | Description |
 | ------- | ---------- | ----------- |
 | `/reload [ctfoverseer]` | setAll | Re-read the configuration file to load in new messages |
+
+### Inter-Plug-in Communication
+
+This plug-in supports using generic callbacks for inter-plug-in communication. Since this plug-in uses semantic versioning in its name, accessing this plugin via a generic callback is not feasible. For this reason, the plug-in registers a clip field under the name of `allejo/ctfOverseer`.
+
+```cpp
+std::string ctfOverseer = bz_getclipFieldString("allejo/ctfOverseer");
+
+std::pair<bz_eTeamType, bz_eTeamType> teamPair = std::make_pair(eRedTeam, eGreenTeam);
+void* data = teamPair;
+int response = bz_callPluginGenericCallback(ctfOverseer.c_str(), "calcBonusPoints", data);
+```
+
+| Callback Name | Expected Type | Return Type |
+| ------------- | ------------- | ----------- |
+| `calcBonusPoints` | `std::pair<bz_eTeamType, bz_eTeamType>` | The amount of points that would be awarded at the given moment for a capture |
+| `isFairCapture` | `std::pair<bz_eTeamType, bz_eTeamType>` | A boolean value casted into an int |
+
+#### Notes
+
+- The value of `-9999` will be returned in the case of an error
+- The first value of the `std::pair` will be the team who is grabbing the enemy flag, the second value is the team whose flag was grabbed
+
+#### Warning
+
+- Passing an object of the incorrect type will lead to unexpected behavior (and possibly server crashes?)
 
 ## License
 
