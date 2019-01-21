@@ -47,7 +47,7 @@ struct Configuration
 {
     std::string SelfCapturePublicMessage;
     std::string SelfCapturePrivateMessage;
-    
+
     std::string FairCapturePublicMessage;
     std::string FairCapturePrivateMessage;
 
@@ -69,12 +69,12 @@ private:
     void loadConfigurationFile();
     void safeSendMessage(const std::string msg, int recipient, StringDict placeholders);
     void formatString(bz_ApiString &string, StringDict placeholders);
-    
+
     bool isFairCapture(bz_eTeamType capping, bz_eTeamType capped);
     int calcCapturePoints(bz_eTeamType capping, bz_eTeamType capped);
 
     Configuration settings;
-    
+
     std::map<bz_eTeamType, double> lastCapTime; /// The server time when a team was last capped on
     std::map<bz_eTeamType, int> capBonus; /// The number of points a capture will be worth against this team
     std::map<int, double> lastFlagDrop; /// The server time a team flag was last dropped
@@ -92,12 +92,12 @@ BZ_PLUGIN(CTFOverseer)
 const char* CTFOverseer::Name()
 {
     static const char* pluginBuild;
-    
+
     if (!pluginBuild)
     {
         pluginBuild = bz_format("%s %d.%d.%d (%d)", PLUGIN_NAME.c_str(), MAJOR, MINOR, REV, BUILD);
     }
-    
+
     return pluginBuild;
 }
 
@@ -109,7 +109,7 @@ void CTFOverseer::Init(const char* config)
 
     // Namespace our clip fields to avoid plug-in conflicts
     bz_setclipFieldString("allejo/ctfOverseer", Name());
-    
+
     Register(bz_eAllowCTFCaptureEvent);
     Register(bz_eAllowFlagGrab);
     Register(bz_eCaptureEvent);
@@ -132,11 +132,11 @@ void CTFOverseer::Cleanup()
     bz_removeCustomBZDBVariable(bzdb_disallowUnfairCap);
     bz_removeCustomBZDBVariable(bzdb_disallowSelfCap);
     bz_removeCustomBZDBVariable(bzdb_warnUnfairTeams);
-    
+
     bz_removeCustomSlashCommand("reload");
 }
 
-int CTFOverseer::GeneralCallback(const char *name, void *data)
+int CTFOverseer::GeneralCallback(const char* name, void* data)
 {
     if (!name)
     {
@@ -178,49 +178,49 @@ void CTFOverseer::Event(bz_EventData* eventData)
             }
         }
         break;
-            
+
         case bz_eAllowFlagGrab:
         {
             bz_AllowFlagGrabData_V1* data = (bz_AllowFlagGrabData_V1*)eventData;
-            
+
             bz_eTeamType team = bzu_getTeamFromFlag(data->flagType);
-            
+
             // Don't disallow flag grabs of regular flags for any reason
             if (!(eRedTeam <= team && team <= ePurpleTeam))
             {
                 return;
             }
-            
+
             // If the team hasn't been capped against yet, don't disallow anything
             if (!lastCapTime.count(team))
             {
                 return;
             }
-            
+
             int teamFlagGrabDelay = bz_getBZDBInt(bzdb_delayTeamFlagGrab);
             double safeGrabTime = lastCapTime[team] + teamFlagGrabDelay;
-            
+
             // If the `_delayTeamFlagGrab` variable is set to a negative number, allow immediate flag grabs after capture
             if (teamFlagGrabDelay < 0)
             {
                 return;
             }
-            
+
             int playerID = data->playerID;
-            
+
             // Don't allow flag grabs on team flags that were captured less than `_delayTeamFlagGrab` seconds ago
             if (bz_getCurrentTime() < safeGrabTime && bz_getPlayerTeam(data->playerID) != team)
             {
                 data->allow = false;
-                
+
                 double safeMsgTime = lastFlagWarnMsg[playerID] + MESSAGE_SPAM_INTERVAL;
-                
+
                 // Don't spam our users if they continue trying to grab it
                 if (bz_getCurrentTime() > safeMsgTime)
                 {
                     bz_sendTextMessagef(BZ_SERVER, playerID, "Team flags cannot be grabbed for %d seconds after they were last capped.", teamFlagGrabDelay);
                     bz_sendTextMessagef(BZ_SERVER, playerID, "You cannot grab the %s team flag for another ~%.0f seconds", bzu_GetTeamName(team), (safeGrabTime - bz_getCurrentTime()));
-                    
+
                     lastFlagWarnMsg[playerID] = bz_getCurrentTime();
                 }
             }
@@ -232,47 +232,47 @@ void CTFOverseer::Event(bz_EventData* eventData)
             bz_CTFCaptureEventData_V1 *data = (bz_CTFCaptureEventData_V1*)eventData;
 
             lastCapTime[data->teamCapped] = bz_getCurrentTime();
-            
+
             StringDict placeholders;
             placeholders["{capper}"] = bz_getPlayerCallsign(data->playerCapping);
             placeholders["{teamCapping}"] = bzu_GetTeamName(data->teamCapping);
             placeholders["{teamCapped}"] = bzu_GetTeamName(data->teamCapped);
-            
+
             // A self-capture
             if (data->teamCapped == bz_getPlayerTeam(data->playerCapping))
             {
                 int penalty = SELF_CAP_MULTIPLIER * bz_getTeamCount(data->teamCapped);
-                
+
                 bz_incrementPlayerLosses(data->playerCapping, penalty);
-                
+
                 placeholders["{points}"] = std::to_string(-1 * penalty).c_str();
                 placeholders["{pointsAbs}"] = std::to_string(penalty).c_str();
-                
+
                 safeSendMessage(settings.SelfCapturePublicMessage, BZ_ALLUSERS, placeholders);
                 safeSendMessage(settings.SelfCapturePrivateMessage, data->playerCapping, placeholders);
 
                 return;
             }
-            
+
             bool isFair = isFairCapture(data->teamCapping, data->teamCapped);
             int bonusPoints = abs(capBonus[data->teamCapped]);
-            
+
             if (isFair)
             {
                 bz_incrementPlayerWins(data->playerCapping, bonusPoints);
-                
+
                 placeholders["{points}"] = placeholders["{pointsAbs}"] = std::to_string(bonusPoints).c_str();
-                
+
                 safeSendMessage(settings.FairCapturePublicMessage, BZ_ALLUSERS, placeholders);
                 safeSendMessage(settings.FairCapturePrivateMessage, data->playerCapping, placeholders);
             }
             else
             {
                 bz_incrementPlayerLosses(data->playerCapping, bonusPoints);
-                
+
                 placeholders["{points}"] = std::to_string(-1 * bonusPoints).c_str();
                 placeholders["{pointsAbs}"] = std::to_string(bonusPoints).c_str();
-                
+
                 safeSendMessage(settings.UnfairCapturePublicMessage, BZ_ALLUSERS, placeholders);
                 safeSendMessage(settings.UnfairCapturePrivateMessage, data->playerCapping, placeholders);
             }
@@ -285,7 +285,7 @@ void CTFOverseer::Event(bz_EventData* eventData)
 
             bz_eTeamType flagTeam = bzu_getTeamFromFlag(data->flagType);
             bz_eTeamType grabTeam = bz_getPlayerTeam(data->playerID);
-            
+
             if (eRedTeam <= grabTeam && grabTeam <= ePurpleTeam && flagTeam != grabTeam)
             {
                 // Only recalculate the capture bonus if it's been X seconds since the flag was last dropped.
@@ -299,7 +299,7 @@ void CTFOverseer::Event(bz_EventData* eventData)
                 {
                     return;
                 }
-                
+
                 int flagTeamSize = bz_getTeamCount(flagTeam);
                 int grabTeamSize = bz_getTeamCount(grabTeam);
 
@@ -308,7 +308,7 @@ void CTFOverseer::Event(bz_EventData* eventData)
                 capBonus[flagTeam] = capValue;
 
                 bool sendWarning = bz_getBZDBBool(bzdb_warnUnfairTeams);
-                
+
                 if (sendWarning && capValue < 0 && flagTeamSize > 0)
                 {
                     bz_sendTextMessagef(BZ_SERVER, data->playerID, "%d vs %d? Don't be a bad sport.", grabTeamSize, flagTeamSize);
@@ -316,11 +316,11 @@ void CTFOverseer::Event(bz_EventData* eventData)
             }
         }
         break;
-            
+
         case bz_eFlagDroppedEvent:
         {
             bz_FlagDroppedEventData_V1 *data = (bz_FlagDroppedEventData_V1*)eventData;
-            
+
             bz_eTeamType flagTeam = bzu_getTeamFromFlag(data->flagType);
             bz_eTeamType grabTeam = bz_getPlayerTeam(data->playerID);
 
@@ -337,7 +337,7 @@ void CTFOverseer::Event(bz_EventData* eventData)
     }
 }
 
-bool CTFOverseer::SlashCommand(int playerID, bz_ApiString command, bz_ApiString /*message*/, bz_APIStringList *params)
+bool CTFOverseer::SlashCommand(int playerID, bz_ApiString command, bz_ApiString /*message*/, bz_APIStringList* params)
 {
     if (command == "reload" && bz_hasPerm(playerID, "setAll"))
     {
@@ -345,18 +345,18 @@ bool CTFOverseer::SlashCommand(int playerID, bz_ApiString command, bz_ApiString 
         {
             loadConfigurationFile();
             bz_sendTextMessage(BZ_SERVER, playerID, "CTF Overseer reloaded");
-            
+
             return true;
         }
-        
+
         if (params->size() == 0)
         {
             loadConfigurationFile();
         }
-        
+
         return false;
     }
-    
+
     return false;
 }
 
@@ -364,13 +364,13 @@ void CTFOverseer::loadConfigurationFile()
 {
     const char* section = "ctfOverseer";
     PluginConfig plgCfg = PluginConfig(configFile);
-    
+
     if (plgCfg.errors)
     {
         bz_debugMessagef(0, "ERROR :: CTF Overseer :: There was an error reading the configuration file: %s", configFile);
         return;
     }
-    
+
     settings.SelfCapturePublicMessage = bz_trim(plgCfg.item(section, "self_cap_message_pub").c_str(), "\"");
     settings.SelfCapturePrivateMessage = bz_trim(plgCfg.item(section, "self_cap_message_pm").c_str(), "\"");
     settings.FairCapturePublicMessage = bz_trim(plgCfg.item(section, "fair_cap_message_pub").c_str(), "\"");
@@ -393,7 +393,7 @@ void CTFOverseer::safeSendMessage(const std::string rawMsg, int recipient, Strin
     {
         return;
     }
-    
+
     bz_ApiString msg = rawMsg;
     formatString(msg, placeholders);
     bz_sendTextMessage(BZ_SERVER, recipient, msg.c_str());
