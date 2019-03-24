@@ -31,8 +31,8 @@ const std::string PLUGIN_NAME = "CTF Overseer";
 // Define plugin version numbering
 const int MAJOR = 1;
 const int MINOR = 0;
-const int REV = 0;
-const int BUILD = 23;
+const int REV = 1;
+const int BUILD = 25;
 
 // Plugin settings
 const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
@@ -83,7 +83,8 @@ private:
     const char* bzdb_delayTeamFlagGrab = "_delayTeamFlagGrab";
     const char* bzdb_disallowSelfCap = "_disallowSelfCap";
     const char* bzdb_warnUnfairTeams = "_warnUnfairTeams";
-    const char* configFile;
+
+    bz_ApiString configFile;
 };
 
 BZ_PLUGIN(CTFOverseer)
@@ -360,11 +361,11 @@ bool CTFOverseer::SlashCommand(int playerID, bz_ApiString command, bz_ApiString 
 void CTFOverseer::loadConfigurationFile()
 {
     const char* section = "ctfOverseer";
-    PluginConfig plgCfg = PluginConfig(configFile);
+    PluginConfig plgCfg = PluginConfig(configFile.c_str());
 
     if (plgCfg.errors)
     {
-        bz_debugMessagef(0, "ERROR :: CTF Overseer :: There was an error reading the configuration file: %s", configFile);
+        bz_debugMessagef(0, "ERROR :: CTF Overseer :: There was an error reading the configuration file: %s", configFile.c_str());
         return;
     }
 
