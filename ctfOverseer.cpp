@@ -30,9 +30,9 @@ const std::string PLUGIN_NAME = "CTF Overseer";
 
 // Define plugin version numbering
 const int MAJOR = 1;
-const int MINOR = 0;
-const int REV = 1;
-const int BUILD = 25;
+const int MINOR = 1;
+const int REV = 0;
+const int BUILD = 26;
 
 // Plugin settings
 const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
@@ -82,6 +82,7 @@ private:
 
     const char* bzdb_delayTeamFlagGrab = "_delayTeamFlagGrab";
     const char* bzdb_disallowSelfCap = "_disallowSelfCap";
+    const char* bzdb_maxCapBonus = "_maxCapBonus";
     const char* bzdb_warnUnfairTeams = "_warnUnfairTeams";
 
     bz_ApiString configFile;
@@ -117,6 +118,7 @@ void CTFOverseer::Init(const char* config)
     Register(bz_eFlagDroppedEvent);
 
     bz_registerCustomBZDBInt(bzdb_delayTeamFlagGrab, 20);
+    bz_registerCustomBZDBInt(bzdb_maxCapBonus, 9999);
     bz_registerCustomBZDBBool(bzdb_disallowSelfCap, true);
     bz_registerCustomBZDBBool(bzdb_warnUnfairTeams, true);
 
@@ -419,5 +421,22 @@ int CTFOverseer::calcCapturePoints(bz_eTeamType capping, bz_eTeamType capped)
     bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   losing team   => %d", losingTeamSize);
     bz_debugMessagef(VERBOSE_DEBUG_LEVEL, "DEBUG :: CTF Overseer ::   grabbing team => %d", cappingTeamSize);
 
-    return (3 * losingTeamSize + 8 * (losingTeamSize - cappingTeamSize));
+    if (cappingTeamSize == 0)
+    {
+        return 0;
+    }
+
+    if (cappingTeamSize > losingTeamSize)
+    {
+        double ratio = (double)losingTeamSize / (double)cappingTeamSize;
+
+        if (ratio <= 0.8)
+        {
+            return 0;
+        }
+    }
+
+    int points = (3 * losingTeamSize + 8 * (losingTeamSize - cappingTeamSize));
+
+    return std::min(bz_getBZDBInt(bzdb_maxCapBonus), points);
 }
