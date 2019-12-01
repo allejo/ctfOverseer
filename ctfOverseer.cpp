@@ -31,8 +31,8 @@ const std::string PLUGIN_NAME = "CTF Overseer";
 // Define plugin version numbering
 const int MAJOR = 1;
 const int MINOR = 1;
-const int REV = 0;
-const int BUILD = 26;
+const int REV = 1;
+const int BUILD = 32;
 
 // Plugin settings
 const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
@@ -82,6 +82,7 @@ private:
 
     const char* bzdb_delayTeamFlagGrab = "_delayTeamFlagGrab";
     const char* bzdb_disallowSelfCap = "_disallowSelfCap";
+    const char* bzdb_disallowUnfairCap = "_disallowUnfairCap";
     const char* bzdb_maxCapBonus = "_maxCapBonus";
     const char* bzdb_warnUnfairTeams = "_warnUnfairTeams";
 
@@ -120,6 +121,7 @@ void CTFOverseer::Init(const char* config)
     bz_registerCustomBZDBInt(bzdb_delayTeamFlagGrab, 20);
     bz_registerCustomBZDBInt(bzdb_maxCapBonus, 9999);
     bz_registerCustomBZDBBool(bzdb_disallowSelfCap, true);
+    bz_registerCustomBZDBBool(bzdb_disallowUnfairCap, false);
     bz_registerCustomBZDBBool(bzdb_warnUnfairTeams, true);
 
     bz_registerCustomSlashCommand("reload", this);
@@ -130,7 +132,9 @@ void CTFOverseer::Cleanup()
     Flush();
 
     bz_removeCustomBZDBVariable(bzdb_delayTeamFlagGrab);
+    bz_removeCustomBZDBVariable(bzdb_maxCapBonus);
     bz_removeCustomBZDBVariable(bzdb_disallowSelfCap);
+    bz_removeCustomBZDBVariable(bzdb_disallowUnfairCap);
     bz_removeCustomBZDBVariable(bzdb_warnUnfairTeams);
 
     bz_removeCustomSlashCommand("reload");
@@ -175,6 +179,28 @@ void CTFOverseer::Event(bz_EventData* eventData)
             if (areSelfCapsDisabled && isSelfCap)
             {
                 data->allow = false;
+
+                return;
+            }
+
+            bool areUnfairCapsDisabled = bz_getBZDBBool(bzdb_disallowUnfairCap);
+            bool isUnfairCap = !isFairCapture(data->teamCapping, data->teamCapped);
+
+            if (areUnfairCapsDisabled && isUnfairCap)
+            {
+                data->allow = false;
+
+                float safetyZone[3];
+                int playerID = data->playerCapping;
+                int flagID = bz_getPlayerFlagID(playerID);
+
+                if (bz_removePlayerFlag(playerID))
+                {
+                    bz_sendTextMessagef(BZ_SERVER, playerID, "Unfair flag captures are disabled, your flag has been taken.");
+                }
+
+                bz_getNearestFlagSafetyZone(flagID, safetyZone);
+                bz_moveFlag(flagID, safetyZone);
             }
         }
         break;

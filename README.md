@@ -60,6 +60,7 @@ These custom BZDB variables can be configured with `-set` in configuration files
 | `_delayTeamFlagGrab` | int | 20 | The number of seconds after a team flag is captured that the team flag is ungrabbable by enemy players |
 | `_maxCapBonus` | int | 9999 | The maximum number of points that can be granted per cap |
 | `_disallowSelfCap` | bool | true | Disallow players from capturing their own flag |
+| `_disallowUnfairCap` | bool | false | Disallow an unfair flag capture and send the team flag to its nearest safety zone |
 | `_warnUnfairTeams` | bool | true | Send a PM to players to warn them they're grabbing an enemy team flag while teams are unfair |
 
 ### Custom Slash Commands
