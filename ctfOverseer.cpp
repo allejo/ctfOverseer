@@ -194,7 +194,11 @@ void CTFOverseer::Event(bz_EventData* eventData)
                 int playerID = data->playerCapping;
                 int flagID = bz_getPlayerFlagID(playerID);
 
-                bz_removePlayerFlag(playerID);
+                if (bz_removePlayerFlag(playerID))
+                {
+                    bz_sendTextMessagef(BZ_SERVER, playerID, "Unfair flag captures are disabled, your flag has been taken.");
+                }
+
                 bz_getNearestFlagSafetyZone(flagID, safetyZone);
                 bz_moveFlag(flagID, safetyZone);
             }
