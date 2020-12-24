@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 
+#include <functional>
 #include <map>
 
 #include "bzfsAPI.h"
@@ -31,8 +32,8 @@ const std::string PLUGIN_NAME = "CTF Overseer";
 // Define plugin version numbering
 const int MAJOR = 1;
 const int MINOR = 1;
-const int REV = 1;
-const int BUILD = 32;
+const int REV = 2;
+const int BUILD = 33;
 
 // Plugin settings
 const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
@@ -42,6 +43,7 @@ const int VERBOSE_DEBUG_LEVEL = 4; /// The debug level that verbose messages wil
 
 typedef std::map<std::string, std::string> StringDict;
 typedef std::pair<bz_eTeamType, bz_eTeamType> TeamPair;
+typedef std::function<void(int playerID, bool isUnfair, bool wasDisallowed)> OnCaptureEventCallbackV1;
 
 struct Configuration
 {
@@ -79,6 +81,9 @@ private:
     std::map<bz_eTeamType, int> capBonus; /// The number of points a capture will be worth against this team
     std::map<int, double> lastFlagDrop; /// The server time a team flag was last dropped
     std::map<int, double> lastFlagWarnMsg; /// The server time a warning was sent to a player trying to grab a team flag
+
+    int onCaptureEventListenersCounter;
+    std::map<int, OnCaptureEventCallbackV1> onCaptureEventListeners;
 
     const char* bzdb_delayTeamFlagGrab = "_delayTeamFlagGrab";
     const char* bzdb_disallowSelfCap = "_disallowSelfCap";
@@ -161,6 +166,21 @@ int CTFOverseer::GeneralCallback(const char* name, void* data)
 
         return (int)isFairCapture(pair->first, pair->second);
     }
+    else if (callback == "listenOnCaptureV1")
+    {
+        OnCaptureEventCallbackV1* callback = static_cast<OnCaptureEventCallbackV1*>(data);
+        int uid = onCaptureEventListenersCounter++;
+
+        onCaptureEventListeners[uid] = *callback;
+
+        return uid;
+    }
+    else if (callback == "removeOnCapture")
+    {
+        int* uid = static_cast<int*>(data);
+
+        return onCaptureEventListeners.erase(*uid) > 0;
+    }
 
     return -9999;
 }
@@ -201,6 +221,11 @@ void CTFOverseer::Event(bz_EventData* eventData)
 
                 bz_getNearestFlagSafetyZone(flagID, safetyZone);
                 bz_moveFlag(flagID, safetyZone);
+            }
+
+            for (auto cb : onCaptureEventListeners)
+            {
+                cb.second(data->playerCapping, isUnfairCap, areUnfairCapsDisabled);
             }
         }
         break;
