@@ -33,7 +33,7 @@ const std::string PLUGIN_NAME = "CTF Overseer";
 const int MAJOR = 1;
 const int MINOR = 1;
 const int REV = 2;
-const int BUILD = 33;
+const int BUILD = 34;
 
 // Plugin settings
 const int RECALC_INTERVAL = 20; /// The number of seconds between a flag drop and point bonus point recalculation
@@ -43,7 +43,7 @@ const int VERBOSE_DEBUG_LEVEL = 4; /// The debug level that verbose messages wil
 
 typedef std::map<std::string, std::string> StringDict;
 typedef std::pair<bz_eTeamType, bz_eTeamType> TeamPair;
-typedef std::function<void(int playerID, bool isUnfair, bool wasDisallowed)> OnCaptureEventCallbackV1;
+typedef std::function<void(int playerID, bool isUnfair, bool wasDisallowed, bool isSelfCap)> OnCaptureEventCallbackV1;
 
 struct Configuration
 {
@@ -110,6 +110,7 @@ const char* CTFOverseer::Name()
 
 void CTFOverseer::Init(const char* config)
 {
+    onCaptureEventListenersCounter = 0;
     configFile = config;
 
     loadConfigurationFile();
@@ -225,7 +226,7 @@ void CTFOverseer::Event(bz_EventData* eventData)
 
             for (auto cb : onCaptureEventListeners)
             {
-                cb.second(data->playerCapping, isUnfairCap, areUnfairCapsDisabled);
+                cb.second(data->playerCapping, isUnfairCap, areUnfairCapsDisabled, isSelfCap);
             }
         }
         break;
