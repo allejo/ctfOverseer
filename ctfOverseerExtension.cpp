@@ -1,5 +1,6 @@
 #include <functional>
 
+#include "ctfOverseerAPI.h"
 #include "bzfsAPI.h"
 
 class SamplePlugin : public bz_Plugin
@@ -27,7 +28,7 @@ void SamplePlugin::Init(const char* config)
     using namespace std::placeholders;
 
     std::string ctfOverseer = bz_getclipFieldString("allejo/ctfOverseer");
-    std::function<void(int, bool, bool, bool)> callback = std::bind(&SamplePlugin::OnCaptureEventCallbackV1, this, _1, _2, _3, _4);
+    OnCaptureEventCallbackV1 callback = std::bind(&SamplePlugin::OnCaptureEventCallbackV1, this, _1, _2, _3, _4);
     onCaptureEventListenerID = bz_callPluginGenericCallback(ctfOverseer.c_str(), "listenOnCaptureV1", static_cast<void*>(&callback));
 
     bz_debugMessagef(0, "Event Listener registered: %d", onCaptureEventListenerID);

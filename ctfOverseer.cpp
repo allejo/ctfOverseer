@@ -22,6 +22,9 @@
 
 #include <functional>
 #include <map>
+#include <utility>
+
+#include "ctfOverseerAPI.h"
 
 #include "bzfsAPI.h"
 #include "plugin_utils.h"
@@ -42,8 +45,6 @@ const int MESSAGE_SPAM_INTERVAL = 5; /// The number of seconds between a message
 const int VERBOSE_DEBUG_LEVEL = 4; /// The debug level that verbose messages will be written out at
 
 typedef std::map<std::string, std::string> StringDict;
-typedef std::pair<bz_eTeamType, bz_eTeamType> TeamPair;
-typedef std::function<void(int playerID, bool isUnfair, bool wasDisallowed, bool isSelfCap)> OnCaptureEventCallbackV1;
 
 struct Configuration
 {
