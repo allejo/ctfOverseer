@@ -73,25 +73,32 @@ This plug-in implements custom slash commands only for administrative tasks.
 
 ### Inter-Plug-in Communication
 
-This plug-in supports using generic callbacks for inter-plug-in communication. Since this plug-in uses semantic versioning in its name, accessing this plugin via a generic callback is not feasible. For this reason, the plug-in registers a clip field under the name of `allejo/ctfOverseer`.
+This plug-in supports using generic callbacks for inter-plug-in communication. Since this plug-in uses semantic versioning in its name, accessing this plugin via a generic callback is not feasible. For this reason, the plug-in registers a clip field under the name of `allejo/ctfOverseer`. This plug-in provides a [`ctfOverseerAPI.h`](./ctfOverseerAPI.h) header file to define types used for callbacks.
 
 ```cpp
-std::string ctfOverseer = bz_getclipFieldString("allejo/ctfOverseer");
+const char* ctfOverseer = bz_getclipFieldString("allejo/ctfOverseer");
 
-std::pair<bz_eTeamType, bz_eTeamType> teamPair = std::make_pair(eRedTeam, eGreenTeam);
+TeamPair teamPair = std::make_pair(eRedTeam, eGreenTeam);
 void* data = teamPair;
-int response = bz_callPluginGenericCallback(ctfOverseer.c_str(), "calcBonusPoints", data);
+
+int response = bz_callPluginGenericCallback(ctfOverseer, "calcBonusPoints", data);
 ```
 
-| Callback Name | Expected Type | Return Type |
-| ------------- | ------------- | ----------- |
-| `calcBonusPoints` | `std::pair<bz_eTeamType, bz_eTeamType>` | The amount of points that would be awarded at the given moment for a capture |
-| `isFairCapture` | `std::pair<bz_eTeamType, bz_eTeamType>` | A boolean value casted into an int |
+| Callback Name       | Expected Type              | Return Type |
+| ------------------- | -------------------------- | ----------- |
+| `calcBonusPoints`   | [`TeamPair`][teampair-api] | The amount of points that would be awarded at the given moment for a capture |
+| `isFairCapture`     | [`TeamPair`][teampair-api] | A boolean value casted into an int |
+| `listenOnCaptureV1` | [`OnCaptureEventCallbackV1`][oncapv1-api] | Register a callback to be executed whenever ctfOverseer handles a capture event |
+| `removeOnCapture`   | [`OnCaptureEventCallbackV1`][oncapv1-api] | Remove a registered callback |
+
+[teampair-api]: ./ctfOverseerAPI.h#L9-L15
+[oncapv1-api]: ./ctfOverseerAPI.h#L17-L30
 
 #### Notes
 
 - The value of `-9999` will be returned in the case of an error
 - The first value of the `std::pair` will be the team who is grabbing the enemy flag, the second value is the team whose flag was grabbed
+- The [`ctfOverseerExtension.cpp`](./ctfOverseerExtension.cpp) plug-in is provided as an example of how to use callbacks
 
 #### Warning
 
