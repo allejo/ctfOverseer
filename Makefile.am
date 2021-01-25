@@ -16,7 +16,8 @@ EXTRA_DIST = \
 	ctfOverseer.def \
 	ctfOverseer.sln \
 	ctfOverseer.vcxproj \
-	ctfOverseer.vcxproj.filters
+	ctfOverseer.vcxproj.filters \
+	ctfOverseerExtension.cpp
 
 MAINTAINERCLEANFILES =	\
 	Makefile.in
